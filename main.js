@@ -39,16 +39,22 @@ let elem_cnt = alphabet.length;
 let pos = new THREE.Vector3();
 let spriteOffset = new THREE.Vector3( 1, 1, 1 );
 
-
-
-
 //Rings
 const ringData = {
 	radius:3,
 	offset:1,
 	rotation:0,
-	lbl_offset: {x: 3.47, y: -1.59, z: 0.5}
+	lbl_offset: {x: 3.76, y: -1.69, z: 0.5}
 }
+
+let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
+    color: 'white'
+}));
+
+let nadir = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
+    color: 'white'
+}));
+let indicatorPos = new THREE.Vector3( 0, 0, 0 );
 
 ui.bindWheelCtrl(ringData, arrangeElements);
 
@@ -69,9 +75,8 @@ colors.forEach((c, idx) => {
 
 //Method to set up initial geometry
 function initElement(color, idx, letter) {
-	console.log('--------------------------')
-	console.log(color)
-	console.log(color)
+	var rgb = color.getStyle().replace('rgb(','');
+	rgb = rgb.replace(')','').split(',');
 
 	let sizeOffset = 0.1*idx;
   let e = new THREE.Mesh(new THREE.CylinderGeometry(0.3+sizeOffset, 0.4+sizeOffset, 0.9), new THREE.MeshBasicMaterial({
@@ -80,9 +85,11 @@ function initElement(color, idx, letter) {
   e.geometry.rotateX(Math.PI * 0.5);
   wheelGrp.add(e);
   elements[idx].push(e);
-  var label = labels.makeTextSprite( " " + letter + " ", { fontsize: 15, backgroundColor: {r:255, g:100, b:100, a:1} } );
+  var label = labels.makeTextSprite( " " + letter + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
 	wheelGrp.add( label );
 	labels_list[idx].push(label);
+	wheelGrp.add(zenith);
+	wheelGrp.add(nadir);
 }
 
 //Set Positions around center
@@ -90,9 +97,15 @@ function arrangeElements() {
 	const step = (Math.PI * 2) / elements.length;
 	for (let i = 0; i < colors.length; i++) {
 		var offset = ringData.offset * i;
+		var indRad = zenith.geometry.parameters.radius;
+		var indOffset = ((indRad*2) + ringData.radius + offset) * i;
+		indicatorPos.set(0, indOffset, 0);
+		zenith.position.copy(indicatorPos);
+		indicatorPos.set(0, -indOffset, 0);
+		nadir.position.copy(indicatorPos)
 		elements[i].forEach((e, ndx) => {
 			let angle = ndx * ( 2 * Math.PI / elements[i].length );
-			let angleOffset = THREE.MathUtils.degToRad(ringData.rotation);
+			let angleOffset = THREE.MathUtils.degToRad(ringData.rotation+7);
 			pos.set(
 					( ringData.radius + offset ) * Math.cos( angle+angleOffset )*wheelGrp.scale.x,
 					( ringData.radius + offset ) * Math.sin( angle+angleOffset )*wheelGrp.scale.y,
