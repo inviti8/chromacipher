@@ -1,34 +1,45 @@
 import * as THREE from 'three';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui'
+import * as labels from './js/labels';
+import * as ui from './js/ui';
 
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
 camera.position.setScalar(5);
 camera.lookAt(scene.position);
-var renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-var controls = new OrbitControls(camera, renderer.domElement);
-var red = new THREE.Color('red');
-var green = new THREE.Color('green');
-var clock = new THREE.Clock();
-var time = 0;
+const controls = new OrbitControls(camera, renderer.domElement);
+const red = new THREE.Color('red');
+const green = new THREE.Color('green');
+const clock = new THREE.Clock();
+let time = 0;
 
 scene.add(new THREE.GridHelper(10, 10));
+const wheelGrp = new THREE.Group();
 
-var elements = [[],[]];
-var colors = [red, green];
-var elem_cnt = 26
+scene.add(wheelGrp);
+
+let elements = [[],[]];
+let colors = [red, green];
+let alphabet = [...Array(26)].map((x,i)=>String.fromCharCode(i + 97));
+let elem_cnt = alphabet.length;
+
+
 //Rings
 const ringData = {
-	rings:2,
-	radius:3,
-	offset:2
+	radius:1,
+	offset:1,
+	rotation:0
 }
 
-//Create initial geometries
+ui.bindWheelCtrl(ringData, arrangeElements);
+
+
+//Create initial geometries for each color/ring
 colors.forEach((c, idx) => {
 	for (let i = 0; i < elem_cnt; i++) {
 	  initElement(c, idx)
@@ -42,7 +53,7 @@ function initElement(color, idx) {
     color: color
   }));
   e.geometry.rotateX(Math.PI * 0.5);
-  scene.add(e);
+  wheelGrp.add(e);
   elements[idx].push(e);
 }
 
@@ -64,20 +75,12 @@ function arrangeElements() {
 		    e.lookAt(0, 0, 0);
 		})
 	}
+
+	wheelGrp.rotation.z = THREE.MathUtils.degToRad(ringData.rotation);
 	
 }
 
 arrangeElements();
-
-
-//UI ELements
-const gui = new GUI()
-const ringFolder = gui.addFolder('Ring')
-
-const ringPropertiesFolder = ringFolder.addFolder('Properties')
-ringPropertiesFolder
-    .add(ringData, 'radius', 1, 30)
-    .onChange(arrangeElements)
 
 
 renderer.setAnimationLoop(() => {
