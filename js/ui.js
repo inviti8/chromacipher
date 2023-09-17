@@ -34,4 +34,10 @@ export function bindWheelCtrl(params, callback){
 		 callback();
 	});
 
+	wheelCtrls.addBinding(params, 'lbl_offset', {
+	  step:0.01,
+	}).on('change', (ev) => {
+		 callback();
+	});
+
 };
