@@ -6,6 +6,11 @@ const wheelCtrls = pane.addFolder({
   expanded: true,   // optional
 });
 
+const outlineCtrls = pane.addFolder({
+  title: 'outline',
+  expanded: true,   // optional
+});
+
 export function bindWheelCtrl(params, callback){
 
 	const wheel_step = 360/26;
@@ -20,8 +25,8 @@ export function bindWheelCtrl(params, callback){
 
 	wheelCtrls.addBinding(params, 'offset', {
 	  step:1,
-	  min: 0,
-  	  max: 30,
+	  min: -2,
+  	  max: 2,
 	}).on('change', (ev) => {
 		 callback();
 	});
@@ -39,5 +44,19 @@ export function bindWheelCtrl(params, callback){
 	}).on('change', (ev) => {
 		 callback();
 	});
+
+};
+
+export function bindOutlineCtrl(params, callback){
+
+	for (const [key, value] of Object.entries(params)) {
+  	outlineCtrls.addBinding(params, key, {
+		  step:0.01,
+		  min: 0,
+	  	max: 10,
+		}).on('change', (ev) => {
+			 callback();
+		});
+	}
 
 };

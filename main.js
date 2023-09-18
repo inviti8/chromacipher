@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import * as labels from './js/labels';
 import * as ui from './js/ui';
 
@@ -13,39 +19,72 @@ const camera = new THREE.OrthographicCamera(
     viewSize / 2,
     viewSize / -2,
     0.1,
-    1000
+    50
 );
+let composer, effectFXAA, outlinePass;
+
 const renderer = new THREE.WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-//const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 const red = new THREE.Color('red');
 const green = new THREE.Color('green');
 const clock = new THREE.Clock();
 let time = 0;
 
-scene.add(new THREE.GridHelper(10, 10));
 const wheelGrp = new THREE.Group();
-
 scene.add(wheelGrp);
 
 let elements = [[],[]];
 let labels_list = [[],[]];
 let colors = [red, green];
-let alphabet = [...Array(26)].map((x,i)=>String.fromCharCode(i + 97));
+let alphabet = [...Array(26)].map((e,i)=>(i+10).toString(36));
+let permute_sel = alphabet.length/2;
+let permute_unsel = permute_sel+2;
 let elem_cnt = alphabet.length;
-
+let mat_outline = new THREE.LineBasicMaterial({ color: "black", linewidth: 10 });
+//Variable that handles ALL element Positions 
 let pos = new THREE.Vector3();
-let spriteOffset = new THREE.Vector3( 1, 1, 1 );
+let btns = [];
+let selectedObjects = [];
+
+
+//navigation
+// Initialize the mouse vector
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+
+// postprocessing
+composer = new EffectComposer( renderer );
+
+const renderPass = new RenderPass( scene, camera );
+composer.addPass( renderPass );
+
+outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+composer.addPass( outlinePass );
+
+const outputPass = new OutputPass();
+composer.addPass( outputPass );
+
+effectFXAA = new ShaderPass( FXAAShader );
+effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+composer.addPass( effectFXAA );
 
 //Rings
 const ringData = {
 	radius:3,
 	offset:1,
 	rotation:0,
-	lbl_offset: {x: 3.76, y: -1.69, z: 0.5}
-}
+	lbl_offset: {x: 3.7, y: -1.69, z: 0.5}
+};
+
+const outlineData = {
+	edgeStrength: 5.0,
+	edgeGlow: 0,
+	edgeThickness: 0.01,
+	pulsePeriod: 0
+};
 
 let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
     color: 'white'
@@ -54,55 +93,82 @@ let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBas
 let nadir = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
     color: 'white'
 }));
-let indicatorPos = new THREE.Vector3( 0, 0, 0 );
 
 ui.bindWheelCtrl(ringData, arrangeElements);
+ui.bindOutlineCtrl(outlineData, updateOutline);
 
 // Function to calculate the aspect ratio
 function calculateAspectRatio() {
     return window.innerWidth / window.innerHeight;
 }
 
+function insertAndShift(arr, from, to) {
+    let cutOut = arr.splice(from, 1) [0];
+    arr.splice(to, 0, cutOut);
+}
+
+function addUserData(elem, tag, color, index, letter){
+	elem.userData = {'tag': tag, 'color': color, 'index': index, 'letter': letter};
+}
+
+function styleToRGB(style){
+	let result = style.replace('rgb(','');
+	result = result.replace(')','').split(',');
+
+	return result
+}
+
 
 //Create initial geometries for each color/ring
-colors.forEach((c, idx) => {
+colors.forEach((c, cdx) => {
 	for (let i = 0; i < elem_cnt; i++) {
 		var letter = alphabet[i];
-	  initElement(c, idx, letter)
+	  initElement(c, cdx, i, letter)
 	}
 })
 
 
 //Method to set up initial geometry
-function initElement(color, idx, letter) {
-	var rgb = color.getStyle().replace('rgb(','');
-	rgb = rgb.replace(')','').split(',');
+function initElement(color, cdx, idx, letter) {
+	var rgb = styleToRGB(color.getStyle());
 
-	let sizeOffset = 0.1*idx;
-  let e = new THREE.Mesh(new THREE.CylinderGeometry(0.3+sizeOffset, 0.4+sizeOffset, 0.9), new THREE.MeshBasicMaterial({
+	let sizeOffset = 0.1*cdx;
+  let e = new THREE.Mesh(new THREE.CylinderGeometry(0.3+sizeOffset, 0.4+sizeOffset, 0.9, 4), new THREE.MeshBasicMaterial({
     color: color
   }));
   e.geometry.rotateX(Math.PI * 0.5);
+  addUserData( e, 'BTN_MESH', colors[cdx], idx, letter );
+  btns.push(e);
   wheelGrp.add(e);
-  elements[idx].push(e);
-  var label = labels.makeTextSprite( " " + letter + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
+  elements[cdx].push(e);
+  var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
+  addUserData( label, 'LABEL', colors[cdx], idx, letter );
 	wheelGrp.add( label );
-	labels_list[idx].push(label);
+	labels_list[cdx].push(label);
 	wheelGrp.add(zenith);
 	wheelGrp.add(nadir);
 }
 
-//Set Positions around center
+function updateOutline(){
+	outlinePass.visibleEdgeColor = '#ffffff';
+	//outlinePass.hiddenEdgeColor = '#190a05';
+	outlinePass.edgeStrength = outlineData.edgeStrength;
+	outlinePass.edgeGlow = outlineData.edgeGlow;
+	outlinePass.edgeThickness = outlineData.edgeThickness;
+	outlinePass.pulsePeriod = outlineData.pulsePeriod;
+}
+
+//Arrange cipher wheels
 function arrangeElements() {
 	const step = (Math.PI * 2) / elements.length;
 	for (let i = 0; i < colors.length; i++) {
 		var offset = ringData.offset * i;
 		var indRad = zenith.geometry.parameters.radius;
 		var indOffset = ((indRad*2) + ringData.radius + offset) * i;
-		indicatorPos.set(0, indOffset, 0);
-		zenith.position.copy(indicatorPos);
-		indicatorPos.set(0, -indOffset, 0);
-		nadir.position.copy(indicatorPos)
+		pos.set(0, indOffset, 0);
+		zenith.position.copy(pos);
+		pos.set(0, -indOffset, 0);
+		nadir.position.copy(pos)
 		elements[i].forEach((e, ndx) => {
 			let angle = ndx * ( 2 * Math.PI / elements[i].length );
 			let angleOffset = THREE.MathUtils.degToRad(ringData.rotation+7);
@@ -112,28 +178,77 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
-			spriteOffset.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
-			labels_list[i][ndx].position.copy(spriteOffset);
+			pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
+			labels_list[i][ndx].position.copy(pos);
 			e.material.color.copy(colors[i]).lerpHSL(new THREE.Color("#FFF"), (ndx * 0.007));
 		  e.lookAt( 0, 0, 0 );
 		  
 		});
 	}
-
-	//wheelGrp.rotation.z = THREE.MathUtils.degToRad(ringData.rotation);
 	
 }
 
+updateOutline();
 arrangeElements();
 
+//Set up interactions
+
 // Set up camera and render loop
-camera.position.z = 1;
+camera.position.z = 40;
 camera.aspect = aspectRatio; // Update the camera's aspect ratio
 camera.updateProjectionMatrix(); // Update the camera's projection matrix
 
-renderer.setAnimationLoop(() => {
-  time = clock.getElapsedTime() * 0.1 * Math.PI;
-  
+function addSelectedObject( object ) {
 
-  renderer.render(scene, camera)
-});
+	selectedObjects = [];
+	selectedObjects.push( object );
+
+}
+
+// Function to handle mouse click events
+function onMouseUp(event) {
+  // Calculate mouse position in normalized device coordinates (NDC)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Update the picking ray with the camera and mouse position
+  raycaster.setFromCamera(mouse, camera);
+
+  // Calculate objects intersecting with the ray
+  const intersectsBtn = raycaster.intersectObjects(btns);
+
+  if (intersectsBtn.length > 0 ) {
+
+   let clicked = intersectsBtn[0].object;
+   addSelectedObject(clicked);
+   outlinePass.selectedObjects = selectedObjects;
+
+
+   console.log(selectedObjects);
+
+  }
+}
+
+window.addEventListener('mouseup', onMouseUp, false);
+
+
+function animate() {
+
+	requestAnimationFrame( animate );
+
+	const timer = performance.now();
+
+	renderer.render(scene, camera)
+	composer.render();
+
+
+}
+
+animate()
+
+
+// renderer.setAnimationLoop(() => {
+//   time = clock.getElapsedTime() * 0.1 * Math.PI;
+//   renderer.render(scene, camera);
+//   composer.render();
+// });
