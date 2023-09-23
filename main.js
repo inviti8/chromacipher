@@ -1,13 +1,8 @@
 import * as THREE from 'three';
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
-import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import * as labels from './js/labels';
 import * as ui from './js/ui';
+import * as postprocess from './js/postprocess';
 
 
 const scene = new THREE.Scene();
@@ -21,9 +16,9 @@ const camera = new THREE.OrthographicCamera(
     0.1,
     50
 );
-let composer, effectFXAA, outlinePass;
 
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer();
+renderer.antialias = true;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -55,21 +50,9 @@ let selectedObjects = [];
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 
-// postprocessing
-composer = new EffectComposer( renderer );
-
-const renderPass = new RenderPass( scene, camera );
-composer.addPass( renderPass );
-
-outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
-composer.addPass( outlinePass );
-
-const outputPass = new OutputPass();
-composer.addPass( outputPass );
-
-effectFXAA = new ShaderPass( FXAAShader );
-effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
-composer.addPass( effectFXAA );
+const appData = {
+  DEBUG: false,
+};
 
 //Rings
 const ringData = {
@@ -77,13 +60,6 @@ const ringData = {
 	offset:1,
 	rotation:0,
 	lbl_offset: {x: 3.7, y: -1.69, z: 0.5}
-};
-
-const outlineData = {
-	edgeStrength: 5.0,
-	edgeGlow: 0,
-	edgeThickness: 0.01,
-	pulsePeriod: 0
 };
 
 let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
@@ -94,8 +70,13 @@ let nadir = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasi
     color: 'white'
 }));
 
+postprocess.init(scene, camera, renderer);
+
+let outlineData = postprocess.getOutlineData();
+
 ui.bindWheelCtrl(ringData, arrangeElements);
-ui.bindOutlineCtrl(outlineData, updateOutline);
+ui.bindOutlineCtrl(outlineData, postprocess.updateOutline);
+ui.bindAppCtrls(appData);
 
 // Function to calculate the aspect ratio
 function calculateAspectRatio() {
@@ -149,15 +130,6 @@ function initElement(color, cdx, idx, letter) {
 	wheelGrp.add(nadir);
 }
 
-function updateOutline(){
-	outlinePass.visibleEdgeColor = '#ffffff';
-	//outlinePass.hiddenEdgeColor = '#190a05';
-	outlinePass.edgeStrength = outlineData.edgeStrength;
-	outlinePass.edgeGlow = outlineData.edgeGlow;
-	outlinePass.edgeThickness = outlineData.edgeThickness;
-	outlinePass.pulsePeriod = outlineData.pulsePeriod;
-}
-
 //Arrange cipher wheels
 function arrangeElements() {
 	const step = (Math.PI * 2) / elements.length;
@@ -188,7 +160,7 @@ function arrangeElements() {
 	
 }
 
-updateOutline();
+postprocess.updateOutline();
 arrangeElements();
 
 //Set up interactions
@@ -221,10 +193,10 @@ function onMouseUp(event) {
 
    let clicked = intersectsBtn[0].object;
    addSelectedObject(clicked);
-   outlinePass.selectedObjects = selectedObjects;
-
-
-   console.log(selectedObjects);
+   console.log(clicked)
+   if(appData.DEBUG){
+   	postprocess.outlineObjects(selectedObjects);
+   }
 
   }
 }
@@ -238,17 +210,12 @@ function animate() {
 
 	const timer = performance.now();
 
-	renderer.render(scene, camera)
-	composer.render();
+	renderer.render(scene, camera);
 
-
+	if(appData.DEBUG){
+		postprocess.composerRender();
+	}
+	
 }
 
-animate()
-
-
-// renderer.setAnimationLoop(() => {
-//   time = clock.getElapsedTime() * 0.1 * Math.PI;
-//   renderer.render(scene, camera);
-//   composer.render();
-// });
+animate();

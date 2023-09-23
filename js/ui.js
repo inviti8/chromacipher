@@ -11,6 +11,10 @@ const outlineCtrls = pane.addFolder({
   expanded: true,   // optional
 });
 
+export function bindAppCtrls(params){
+	pane.addBinding(params, 'DEBUG');
+};
+
 export function bindWheelCtrl(params, callback){
 
 	const wheel_step = 360/26;
