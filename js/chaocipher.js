@@ -69,13 +69,13 @@ export function permute(object, arrs, labels){
 export function permuteSelected(index, arr){
 	//console.log(arr[index])
 	let from = index - 3;
-	let to = index - 11;
+	let to = from - 11;
 
 	if(from<0){
-		from=Math.abs(from);
+		from=arr.length+from;
 	}
 	if(to<0){
-		to=Math.abs(to);
+		to=arr.length+to;
 	}
 
 	//console.log(from)
@@ -85,12 +85,12 @@ export function permuteSelected(index, arr){
 
 export function permuteUnselected(index, arr){
 	let from = index - 1;
-	let to = index - 12;
-	if(index<0){
-		from=Math.abs(from)-1;
+	let to = from - 13;
+	if(from<0){
+		from=arr.length+from;
 	}
 	if(to<0){
-		to=Math.abs(to)-1;
+		to=arr.length+to;
 	}
 	//console.log(arr[from])
 	insertAndShift(arr, from, to);

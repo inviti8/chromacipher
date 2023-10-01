@@ -108,9 +108,10 @@ function styleToRGB(style){
 //Create initial geometries for each color/ring
 colors.forEach((c, cdx) => {
 	for (let i = 0; i < elem_cnt; i++) {
-		var letter = alphabet[i];
+		//var letter = alphabet[i];
 		var letter = debug_letters[cdx][i];
-	  initElement(c, cdx, i, letter)
+		//initElement(c, cdx, i, letter+i.toString())
+	  initElement(c, cdx, i, letter);
 	}
 });
 
