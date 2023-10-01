@@ -3,7 +3,7 @@ import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import * as labels from './js/labels';
 import * as ui from './js/ui';
 import * as postprocess from './js/postprocess';
-
+import * as cipher from './js/chaocipher';
 
 const scene = new THREE.Scene();
 const aspectRatio = calculateAspectRatio();
@@ -50,6 +50,11 @@ let selectedObjects = [];
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 
+const debug_1 = "ZPAOEQYUJFIKGDXCHBRTMLNWSV"
+const debug_2 = "ECZVWMBXKJQSNTHDIUPOALRGFY"
+const debug_letters = [debug_1, debug_2]
+
+
 const appData = {
   DEBUG: false,
 };
@@ -74,9 +79,10 @@ postprocess.init(scene, camera, renderer);
 
 let outlineData = postprocess.getOutlineData();
 
+//Set up ui
+ui.bindAppCtrls(appData);
 ui.bindWheelCtrl(ringData, arrangeElements);
 ui.bindOutlineCtrl(outlineData, postprocess.updateOutline);
-ui.bindAppCtrls(appData);
 
 // Function to calculate the aspect ratio
 function calculateAspectRatio() {
@@ -99,15 +105,14 @@ function styleToRGB(style){
 	return result
 }
 
-
 //Create initial geometries for each color/ring
 colors.forEach((c, cdx) => {
 	for (let i = 0; i < elem_cnt; i++) {
 		var letter = alphabet[i];
+		var letter = debug_letters[cdx][i];
 	  initElement(c, cdx, i, letter)
 	}
-})
-
+});
 
 //Method to set up initial geometry
 function initElement(color, cdx, idx, letter) {
@@ -117,6 +122,7 @@ function initElement(color, cdx, idx, letter) {
   let e = new THREE.Mesh(new THREE.CylinderGeometry(0.3+sizeOffset, 0.4+sizeOffset, 0.9, 4), new THREE.MeshBasicMaterial({
     color: color
   }));
+
   e.geometry.rotateX(Math.PI * 0.5);
   addUserData( e, 'BTN_MESH', colors[cdx], idx, letter );
   btns.push(e);
@@ -125,9 +131,9 @@ function initElement(color, cdx, idx, letter) {
   var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
   addUserData( label, 'LABEL', colors[cdx], idx, letter );
 	wheelGrp.add( label );
-	labels_list[cdx].push(label);
-	wheelGrp.add(zenith);
-	wheelGrp.add(nadir);
+	labels_list[cdx].push( label );
+	wheelGrp.add( zenith );
+	wheelGrp.add( nadir );
 }
 
 //Arrange cipher wheels
@@ -163,18 +169,17 @@ function arrangeElements() {
 postprocess.updateOutline();
 arrangeElements();
 
-//Set up interactions
-
+//SET UP INTERACTIONS
 // Set up camera and render loop
 camera.position.z = 40;
 camera.aspect = aspectRatio; // Update the camera's aspect ratio
 camera.updateProjectionMatrix(); // Update the camera's projection matrix
 
 function addSelectedObject( object ) {
-
 	selectedObjects = [];
-	selectedObjects.push( object );
-
+	//selectedObjects.push( object );
+	cipher.permute(object, elements, labels_list);
+	arrangeElements();
 }
 
 // Function to handle mouse click events
@@ -193,7 +198,8 @@ function onMouseUp(event) {
 
    let clicked = intersectsBtn[0].object;
    addSelectedObject(clicked);
-   console.log(clicked)
+   //console.log(clicked)
+   console.log(clicked.userData.index)
    if(appData.DEBUG){
    	postprocess.outlineObjects(selectedObjects);
    }
@@ -202,7 +208,6 @@ function onMouseUp(event) {
 }
 
 window.addEventListener('mouseup', onMouseUp, false);
-
 
 function animate() {
 
