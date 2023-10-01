@@ -3,7 +3,7 @@ const pane = new Pane();
 
 const wheelCtrls = pane.addFolder({
   title: 'Wheel',
-  expanded: true,   // optional
+  expanded: false,   // optional
 });
 
 const outlineCtrls = pane.addFolder({
@@ -11,8 +11,11 @@ const outlineCtrls = pane.addFolder({
   expanded: false,   // optional
 });
 
-export function bindAppCtrls(params){
+export function bindAppCtrls(params, callback){
 	pane.addBinding(params, 'DEBUG');
+	pane.addBinding(params, 'USE_LABELS').on('change', (ev) => {
+		 callback();
+	});
 };
 
 export function bindWheelCtrl(params, callback){

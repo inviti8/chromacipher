@@ -29,7 +29,7 @@ const green = new THREE.Color('green');
 const clock = new THREE.Clock();
 let time = 0;
 
-const wheelGrp = new THREE.Group();
+let wheelGrp = new THREE.Group();
 scene.add(wheelGrp);
 
 let elements = [[],[]];
@@ -45,7 +45,6 @@ let pos = new THREE.Vector3();
 let btns = [];
 let selectedObjects = [];
 
-
 //navigation
 // Initialize the mouse vector
 const mouse = new THREE.Vector2();
@@ -55,9 +54,9 @@ const debug_1 = "ZPAOEQYUJFIKGDXCHBRTMLNWSV"
 const debug_2 = "ECZVWMBXKJQSNTHDIUPOALRGFY"
 const debug_letters = [debug_1, debug_2]
 
-
 const appData = {
   DEBUG: false,
+  USE_LABELS: false
 };
 
 //Rings
@@ -92,7 +91,7 @@ postprocess.init(scene, camera, renderer);
 let outlineData = postprocess.getOutlineData();
 
 //Set up ui
-ui.bindAppCtrls(appData);
+ui.bindAppCtrls(appData, onUpdateAppCtrls);
 ui.bindWheelCtrl(ringData, arrangeElements);
 ui.bindOutlineCtrl(outlineData, postprocess.updateOutline);
 
@@ -117,15 +116,36 @@ function styleToRGB(style){
 	return result
 }
 
-//Create initial geometries for each color/ring
-colors.forEach((c, cdx) => {
-	for (let i = 0; i < elem_cnt; i++) {
-		//var letter = alphabet[i];
-		var letter = debug_letters[cdx][i];
-		//initElement(c, cdx, i, letter+i.toString())
-	  initElement(c, cdx, i, letter);
-	}
-});
+function buildRings(){
+	labels_list.forEach((list, idx) => {
+		list.forEach((label, ijx) => {
+			label.geometry.dispose();
+			label.material.map.dispose();
+			label.material.dispose();
+		});
+	});
+
+	wheelGrp.children.forEach((child, idx) => {
+		child.geometry.dispose();
+		child.material.dispose();
+	});
+	scene.remove(wheelGrp);
+	wheelGrp = new THREE.Group();
+	scene.add(wheelGrp);
+
+	elements = [[],[]];
+	labels_list = [[],[]];
+
+	//Create initial geometries for each color/ring
+	colors.forEach((c, cdx) => {
+		for (let i = 0; i < elem_cnt; i++) {
+			//var letter = alphabet[i];
+			var letter = debug_letters[cdx][i];
+			//initElement(c, cdx, i, letter+i.toString())
+		  initElement(c, cdx, i, letter);
+		}
+	});
+}
 
 //Method to set up initial geometry
 function initElement(color, cdx, idx, letter) {
@@ -144,10 +164,13 @@ function initElement(color, cdx, idx, letter) {
   btns.push(e);
   wheelGrp.add(e);
   elements[cdx].push(e);
-  var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
-  addUserData( label, 'LABEL', colors[cdx], idx, letter );
-	wheelGrp.add( label );
-	labels_list[cdx].push( label );
+  if(appData.USE_LABELS){
+  	var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
+	  addUserData( label, 'LABEL', colors[cdx], idx, letter );
+		wheelGrp.add( label );
+		labels_list[cdx].push( label );
+  }
+  
 	wheelGrp.add( zenith );
 	wheelGrp.add( nadir );
 }
@@ -172,8 +195,12 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
-			pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
-			labels_list[i][ndx].position.copy(pos);
+
+			if(appData.USE_LABELS){
+				pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
+				labels_list[i][ndx].position.copy(pos);
+			}
+			
 			e.material.color.copy(colors[i]).lerpHSL(new THREE.Color("#FFF"), (ndx * 0.007));
 		  e.lookAt( 0, 0, 0 );
 		  
@@ -182,6 +209,7 @@ function arrangeElements() {
 	
 }
 
+buildRings();
 postprocess.updateOutline();
 arrangeElements();
 
@@ -242,6 +270,11 @@ function onMouseUp(event) {
 }
 
 window.addEventListener('mouseup', onMouseUp, false);
+
+function onUpdateAppCtrls(){
+	buildRings();
+	arrangeElements();
+}
 
 function animate() {
 

@@ -41,7 +41,7 @@ export function scrambleRing(arr){
 	return _shuffle(alphabet);
 };
 
-export function permute(object, arrs, labels){
+export function permute(object, arrs, labels=undefined){
 	let selIdx = 0;
 	let unselIdx = 0;
 	arrs.forEach((array, i) => {
@@ -59,9 +59,10 @@ export function permute(object, arrs, labels){
 	permuteSelected(index, arrs[selIdx]);
 	permuteUnselected(index, arrs[unselIdx]);
 
-	permuteSelected(index, labels[selIdx]);
-	permuteUnselected(index, labels[unselIdx]);
-
+	if(labels!=undefined){
+		permuteSelected(index, labels[selIdx]);
+		permuteUnselected(index, labels[unselIdx]);
+	}
 }
 
 export function permuteSelected(index, arr){
