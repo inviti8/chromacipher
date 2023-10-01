@@ -7,7 +7,7 @@ export function makeTextSprite( message, parameters ){
     var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 1;
     var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
     var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
-    var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
+    var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:255, g:255, b:255, a:1.0 };
 
     var canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');

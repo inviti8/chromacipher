@@ -52,11 +52,9 @@ export function permute(object, arrs, labels){
 		}
 	});
 
-	let selArr = arrs[selIdx];
-	let selLabels = labels[selIdx];
 	let unselArr = arrs[unselIdx];
 	let unselLabels = labels[unselIdx];
-	let index = selArr.indexOf(object);
+	let index = arrs[selIdx].indexOf(object);
 
 	permuteSelected(index, arrs[selIdx]);
 	permuteUnselected(index, arrs[unselIdx]);
@@ -78,8 +76,6 @@ export function permuteSelected(index, arr){
 		to=arr.length+to;
 	}
 
-	//console.log(from)
-	console.log(arr[from])
 	insertAndShift(arr, from, to);
 };
 
@@ -92,7 +88,7 @@ export function permuteUnselected(index, arr){
 	if(to<0){
 		to=arr.length+to;
 	}
-	//console.log(arr[from])
+
 	insertAndShift(arr, from, to);
 };
 

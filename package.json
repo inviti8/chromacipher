@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "gsap": "^3.12.2",
     "three": "^0.156.1",
     "three-bmfont-text": "^2.3.0",
     "tweakpane": "^4.0.1"

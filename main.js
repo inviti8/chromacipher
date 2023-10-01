@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { gsap } from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import * as labels from './js/labels';
 import * as ui from './js/ui';
@@ -67,13 +68,24 @@ const ringData = {
 	lbl_offset: {x: 3.7, y: -1.69, z: 0.5}
 };
 
+const ctrls = [];
+
 let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
-    color: 'white'
+    color: 'white',
+    wireframe: true
 }));
 
+addUserData( zenith, 'ZENITH', zenith.material.color, 0, undefined );
+
 let nadir = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
-    color: 'white'
+    color: 'white',
+    wireframe: true
 }));
+
+addUserData( nadir, 'NADIR', nadir.material.color, 0, undefined );
+
+ctrls.push(zenith);
+ctrls.push(nadir);
 
 postprocess.init(scene, camera, renderer);
 
@@ -121,7 +133,10 @@ function initElement(color, cdx, idx, letter) {
 
 	let sizeOffset = 0.1*cdx;
   let e = new THREE.Mesh(new THREE.CylinderGeometry(0.3+sizeOffset, 0.4+sizeOffset, 0.9, 4), new THREE.MeshBasicMaterial({
-    color: color
+    color: color,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.2
   }));
 
   e.geometry.rotateX(Math.PI * 0.5);
@@ -176,11 +191,17 @@ camera.position.z = 40;
 camera.aspect = aspectRatio; // Update the camera's aspect ratio
 camera.updateProjectionMatrix(); // Update the camera's projection matrix
 
+function incrementRotation(direction=1){
+	let step = 360/26;
+	ringData.rotation+=step*direction;
+	arrangeElements();
+}
+
 function addSelectedObject( object ) {
 	selectedObjects = [];
 	//selectedObjects.push( object );
 	cipher.permute(object, elements, labels_list);
-	arrangeElements();
+	incrementRotation();
 }
 
 // Function to handle mouse click events
@@ -194,6 +215,7 @@ function onMouseUp(event) {
 
   // Calculate objects intersecting with the ray
   const intersectsBtn = raycaster.intersectObjects(btns);
+  const intersectsCtrl = raycaster.intersectObjects(ctrls);
 
   if (intersectsBtn.length > 0 ) {
 
@@ -201,11 +223,22 @@ function onMouseUp(event) {
    addSelectedObject(clicked);
    //console.log(clicked)
    console.log(clicked.userData.index)
+   
    if(appData.DEBUG){
    	postprocess.outlineObjects(selectedObjects);
    }
 
   }
+
+  if (intersectsCtrl.length > 0 ) {
+  	let clicked = intersectsCtrl[0].object;
+
+  	if(clicked.userData.tag=='ZENITH'){
+	   	incrementRotation();
+	   }else if(clicked.userData.tag=='NADIR'){
+	   	incrementRotation(-1);
+	   }
+	 }
 }
 
 window.addEventListener('mouseup', onMouseUp, false);
@@ -220,8 +253,7 @@ function animate() {
 
 	if(appData.DEBUG){
 		postprocess.composerRender();
-	}
-	
+	}	
 }
 
 animate();
