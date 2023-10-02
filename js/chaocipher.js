@@ -1,44 +1,15 @@
 import * as THREE from 'three';
+import { shuffle, containsObject } from '/js/utils';
 
-
-function _shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle.
-  while (currentIndex > 0) {
-
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
-}
-
-function containsObject(obj, arr) {
-    var i;
-    for (i = 0; i < arr.length; i++) {
-        if (arr[i] === obj) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 function insertAndShift(arr, from, to) {
     let cutOut = arr.splice(from, 1) [0]; // cut the element at index 'from'
     arr.splice(to, 0, cutOut);            // insert it at index 'to'
 }
 
-export function scrambleRing(arr){
+export function shuffledText(){
 	const alphabet = [...Array(26)].map((e,i)=>(i+10).toString(36));
-
-	return _shuffle(alphabet);
+	return shuffle(alphabet);
 };
 
 export function permute(object, arrs, labels=undefined){

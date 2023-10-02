@@ -11,6 +11,21 @@ const outlineCtrls = pane.addFolder({
   expanded: false,   // optional
 });
 
+const cipherCtrls = pane.addFolder({
+  title: 'cipher text',
+  expanded: false,   // optional
+});
+
+const encipherCtrls = pane.addFolder({
+  title: 'encipher',
+  expanded: false,   // optional
+});
+
+const decipherCtrls = pane.addFolder({
+  title: 'decipher',
+  expanded: false,   // optional
+});
+
 export function bindAppCtrls(params, callback){
 	pane.addBinding(params, 'DEBUG');
 	pane.addBinding(params, 'USE_LABELS').on('change', (ev) => {
@@ -66,4 +81,54 @@ export function bindOutlineCtrl(params, callback){
 		});
 	}
 
+};
+
+export function bindCipherCtrl(params, callback){
+	cipherCtrls.addBinding(params, 'ring1');
+	cipherCtrls.addBinding(params, 'ring2');
+
+	const btnRandomizeText = cipherCtrls.addButton({
+	  title: 'randomize text'
+	});
+
+
+	encipherCtrls.addBinding(params, 'text_in', {
+	  readonly: false,
+	  multiline: true,
+	  rows: 3,
+	});
+
+	encipherCtrls.addBinding(params, 'text_out', {
+	  readonly: true,
+	  multiline: true,
+	  rows: 3,
+	});
+
+	encipherCtrls.addBlade({
+		 view: 'separator',
+	});
+
+	const btnEncipher = encipherCtrls.addButton({
+	  title: 'encipher'
+	});
+	const btnCopy1 = encipherCtrls.addButton({
+	  title: 'copy'
+	});
+
+	decipherCtrls.addBinding(params, 'text_in', {
+	  readonly: false,
+	  multiline: true,
+	  rows: 3,
+	});
+
+	encipherCtrls.addBlade({
+		 view: 'separator',
+	});
+
+	const btnDecipher = decipherCtrls.addButton({
+	  title: 'decipher'
+	});
+	const btnCopy2 = decipherCtrls.addButton({
+	  title: 'copy'
+	});
 };

@@ -5,6 +5,7 @@ import * as labels from './js/labels';
 import * as ui from './js/ui';
 import * as postprocess from './js/postprocess';
 import * as cipher from './js/chaocipher';
+import { shuffle } from './js/utils';
 
 const scene = new THREE.Scene();
 const aspectRatio = calculateAspectRatio();
@@ -36,8 +37,6 @@ let elements = [[],[]];
 let labels_list = [[],[]];
 let colors = [red, green];
 let alphabet = [...Array(26)].map((e,i)=>(i+10).toString(36));
-let permute_sel = alphabet.length/2;
-let permute_unsel = permute_sel+2;
 let elem_cnt = alphabet.length;
 let mat_outline = new THREE.LineBasicMaterial({ color: "black", linewidth: 10 });
 //Variable that handles ALL element Positions 
@@ -67,6 +66,14 @@ const ringData = {
 	lbl_offset: {x: 3.7, y: -1.69, z: 0.5}
 };
 
+const cipherData = {
+  ring1: cipher.shuffledText().join(' ').replace(/\s/g, ""),
+  ring2: cipher.shuffledText().join(' ').replace(/\s/g, ""),
+  text_in: "",
+  text_out: ""
+
+};
+
 const ctrls = [];
 
 let zenith = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshBasicMaterial({
@@ -94,6 +101,7 @@ let outlineData = postprocess.getOutlineData();
 ui.bindAppCtrls(appData, onUpdateAppCtrls);
 ui.bindWheelCtrl(ringData, arrangeElements);
 ui.bindOutlineCtrl(outlineData, postprocess.updateOutline);
+ui.bindCipherCtrl(cipherData, onUpdateCipherCtrls);
 
 // Function to calculate the aspect ratio
 function calculateAspectRatio() {
@@ -118,10 +126,12 @@ function styleToRGB(style){
 
 function buildRings(){
 	labels_list.forEach((list, idx) => {
-		list.forEach((label, ijx) => {
-			label.geometry.dispose();
-			label.material.map.dispose();
-			label.material.dispose();
+		list.forEach((label, idx) => {
+			if(label!=undefined){
+				label.geometry.dispose();
+				label.material.map.dispose();
+				label.material.dispose();
+			}
 		});
 	});
 
@@ -129,6 +139,7 @@ function buildRings(){
 		child.geometry.dispose();
 		child.material.dispose();
 	});
+
 	scene.remove(wheelGrp);
 	wheelGrp = new THREE.Group();
 	scene.add(wheelGrp);
@@ -274,6 +285,10 @@ window.addEventListener('mouseup', onMouseUp, false);
 function onUpdateAppCtrls(){
 	buildRings();
 	arrangeElements();
+}
+
+function onUpdateCipherCtrls(){
+
 }
 
 function animate() {
