@@ -288,7 +288,8 @@ function onUpdateAppCtrls(){
 }
 
 function onUpdateCipherCtrls(){
-
+	buildRings();
+	arrangeElements();
 }
 
 function animate() {

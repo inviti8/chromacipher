@@ -18,6 +18,7 @@ const cipherCtrls = pane.addFolder({
 });
 
 let cipherInputs = [];
+let cipherCallback = undefined;
 
 const encipherCtrls = pane.addFolder({
   title: 'encipher',
@@ -110,10 +111,14 @@ function updateCipherInputs(params){
 	});
 
 	cipherInputs.push(btn);
+
+	cipherCallback();
+	
 }
 
 export function bindCipherCtrl(params, callback){
 
+	cipherCallback = callback;
 	updateCipherInputs(params);
 
 	encipherCtrls.addBinding(params, 'text_in', {
