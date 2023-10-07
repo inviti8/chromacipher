@@ -1,4 +1,5 @@
 import {Pane} from 'tweakpane';
+import * as cipher from '/js/chaocipher';
 const pane = new Pane();
 
 const wheelCtrls = pane.addFolder({
@@ -15,6 +16,8 @@ const cipherCtrls = pane.addFolder({
   title: 'cipher text',
   expanded: false,   // optional
 });
+
+let cipherInputs = [];
 
 const encipherCtrls = pane.addFolder({
   title: 'encipher',
@@ -83,14 +86,35 @@ export function bindOutlineCtrl(params, callback){
 
 };
 
-export function bindCipherCtrl(params, callback){
-	cipherCtrls.addBinding(params, 'ring1');
-	cipherCtrls.addBinding(params, 'ring2');
+function updateCipherInputs(params){
 
-	const btnRandomizeText = cipherCtrls.addButton({
-	  title: 'randomize text'
+	cipherInputs.forEach((input, idx) => {
+		input.dispose();
 	});
 
+	cipherInputs = [];
+
+	params.ciphers.forEach((c, idx) => {
+		let k = 'ring'+idx.toString();
+		const prop = {}
+		prop[k] = c;
+		let input = cipherCtrls.addBinding(prop, k);
+		cipherInputs.push(input);
+	});
+
+	const btn = cipherCtrls.addButton({
+	  title: 'randomize text'
+	}).on('click', (ev) => {
+		params.ciphers = cipher.createCiphers(params.ciphers.length);
+		updateCipherInputs(params);
+	});
+
+	cipherInputs.push(btn);
+}
+
+export function bindCipherCtrl(params, callback){
+
+	updateCipherInputs(params);
 
 	encipherCtrls.addBinding(params, 'text_in', {
 	  readonly: false,

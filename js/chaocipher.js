@@ -1,10 +1,18 @@
 import * as THREE from 'three';
 import { shuffle, containsObject } from '/js/utils';
 
-
 function insertAndShift(arr, from, to) {
     let cutOut = arr.splice(from, 1) [0]; // cut the element at index 'from'
     arr.splice(to, 0, cutOut);            // insert it at index 'to'
+}
+
+export function createCiphers(count){
+	let ciphers=[];
+	for (let i = 0; i < count; i++) {
+		  ciphers.push(shuffledText().join(' ').replace(/\s/g, ""));
+	}
+
+	return ciphers
 }
 
 export function shuffledText(){

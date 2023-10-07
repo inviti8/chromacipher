@@ -49,9 +49,9 @@ let selectedObjects = [];
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 
-const debug_1 = "ZPAOEQYUJFIKGDXCHBRTMLNWSV"
-const debug_2 = "ECZVWMBXKJQSNTHDIUPOALRGFY"
-const debug_letters = [debug_1, debug_2]
+const debug_1 = "ZPAOEQYUJFIKGDXCHBRTMLNWSV";
+const debug_2 = "ECZVWMBXKJQSNTHDIUPOALRGFY";
+const debug_letters = [debug_1, debug_2];
 
 const appData = {
   DEBUG: false,
@@ -66,12 +66,10 @@ const ringData = {
 	lbl_offset: {x: 3.7, y: -1.69, z: 0.5}
 };
 
-const cipherData = {
-  ring1: cipher.shuffledText().join(' ').replace(/\s/g, ""),
-  ring2: cipher.shuffledText().join(' ').replace(/\s/g, ""),
+let cipherData = {
+	ciphers: cipher.createCiphers(colors.length),
   text_in: "",
   text_out: ""
-
 };
 
 const ctrls = [];
@@ -150,9 +148,11 @@ function buildRings(){
 	//Create initial geometries for each color/ring
 	colors.forEach((c, cdx) => {
 		for (let i = 0; i < elem_cnt; i++) {
-			//var letter = alphabet[i];
-			var letter = debug_letters[cdx][i];
-			//initElement(c, cdx, i, letter+i.toString())
+			var letter = cipherData.ciphers[cdx][i];
+
+			if(appData.DEBUG){
+				letter = debug_letters[cdx][i];
+			}
 		  initElement(c, cdx, i, letter);
 		}
 	});
