@@ -108,11 +108,12 @@ function updateCipherInputs(params){
 	}).on('click', (ev) => {
 		params.ciphers = cipher.createCiphers(params.ciphers.length);
 		updateCipherInputs(params);
+		cipherCallback();
 	});
 
 	cipherInputs.push(btn);
 
-	cipherCallback();
+
 	
 }
 

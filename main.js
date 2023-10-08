@@ -6,6 +6,7 @@ import * as ui from './js/ui';
 import * as postprocess from './js/postprocess';
 import * as cipher from './js/chaocipher';
 import { shuffle } from './js/utils';
+import { loadFont, textMesh } from './js/cipher_text';
 
 const scene = new THREE.Scene();
 const aspectRatio = calculateAspectRatio();
@@ -32,6 +33,8 @@ let time = 0;
 
 let wheelGrp = new THREE.Group();
 scene.add(wheelGrp);
+let letterGrp = new THREE.Group();
+scene.add(letterGrp);
 
 let elements = [[],[]];
 let labels_list = [[],[]];
@@ -52,6 +55,10 @@ const raycaster = new THREE.Raycaster();
 const debug_1 = "ZPAOEQYUJFIKGDXCHBRTMLNWSV";
 const debug_2 = "ECZVWMBXKJQSNTHDIUPOALRGFY";
 const debug_letters = [debug_1, debug_2];
+const fontPath = 'fonts/Generic_Techno_Regular.json'
+let FONT = undefined;//loaded with on font load
+loadFont(fontPath, onFontLoad);
+
 
 const appData = {
   DEBUG: false,
@@ -71,6 +78,8 @@ let cipherData = {
   text_in: "",
   text_out: ""
 };
+
+let letters = {};
 
 const ctrls = [];
 
@@ -143,6 +152,7 @@ function buildRings(){
 	scene.add(wheelGrp);
 
 	elements = [[],[]];
+	letters = [[], []];
 	labels_list = [[],[]];
 
 	//Create initial geometries for each color/ring
@@ -160,6 +170,7 @@ function buildRings(){
 
 //Method to set up initial geometry
 function initElement(color, cdx, idx, letter) {
+	console.log('Init Element: '+letter);
 	var rgb = styleToRGB(color.getStyle());
 
 	let sizeOffset = 0.1*cdx;
@@ -175,6 +186,11 @@ function initElement(color, cdx, idx, letter) {
   btns.push(e);
   wheelGrp.add(e);
   elements[cdx].push(e);
+  let text = textMesh(letter, FONT, 0.5, 0.1);
+  addUserData( text, 'TEXT_MESH', colors[cdx], idx, letter );
+  letters[cdx].push( text );
+  letterGrp.add( text );
+
   if(appData.USE_LABELS){
   	var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
 	  addUserData( label, 'LABEL', colors[cdx], idx, letter );
@@ -188,6 +204,7 @@ function initElement(color, cdx, idx, letter) {
 
 //Arrange cipher wheels
 function arrangeElements() {
+	console.log('Arrange Elements');
 	const step = (Math.PI * 2) / elements.length;
 	for (let i = 0; i < colors.length; i++) {
 		var offset = ringData.offset * i;
@@ -206,6 +223,7 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
+			letters[i][ndx].position.copy(pos);
 
 			if(appData.USE_LABELS){
 				pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
@@ -219,10 +237,6 @@ function arrangeElements() {
 	}
 	
 }
-
-buildRings();
-postprocess.updateOutline();
-arrangeElements();
 
 //SET UP INTERACTIONS
 // Set up camera and render loop
@@ -260,7 +274,6 @@ function onMouseUp(event) {
 
    let clicked = intersectsBtn[0].object;
    addSelectedObject(clicked);
-   //console.log(clicked)
    console.log(clicked.userData.index)
    
    if(appData.DEBUG){
@@ -283,12 +296,23 @@ function onMouseUp(event) {
 window.addEventListener('mouseup', onMouseUp, false);
 
 function onUpdateAppCtrls(){
+	console.log('onUpdateAppCtrls')
 	buildRings();
 	arrangeElements();
 }
 
 function onUpdateCipherCtrls(){
+	console.log('onUpdateCipherCtrls')
 	buildRings();
+	arrangeElements();
+}
+
+function onFontLoad(font){
+	console.log('onFontLoad')
+	FONT = font;
+	console.log('Font Loaded')
+	buildRings();
+	postprocess.updateOutline();
 	arrangeElements();
 }
 
