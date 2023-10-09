@@ -53,7 +53,7 @@ export function translateLetter(letter, targetPos, duration, ease, delay=0, dela
 	const size = getSize( letter );
 	const offsetX = size.width/2;
 	const offsetY = size.height/2;
-	console.log(offsetX)
+
 	targetPos=pos.set( targetPos.x-offsetX, targetPos.y-offsetY, targetPos.z );
 	translate(letter, targetPos, config);
 

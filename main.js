@@ -120,8 +120,8 @@ function insertAndShift(arr, from, to) {
     arr.splice(to, 0, cutOut);
 }
 
-function addUserData(elem, tag, color, index, letter){
-	elem.userData = {'tag': tag, 'color': color, 'index': index, 'letter': letter};
+function addUserData(elem, tag, color, index, letter, follower=undefined){
+	elem.userData = {'tag': tag, 'color': color, 'index': index, 'letter': letter, 'follower':follower};
 }
 
 function styleToRGB(style){
@@ -170,7 +170,6 @@ function buildRings(){
 
 //Method to set up initial geometry
 function initElement(color, cdx, idx, letter) {
-	console.log('Init Element: '+letter);
 	var rgb = styleToRGB(color.getStyle());
 
 	let sizeOffset = 0.1*cdx;
@@ -181,15 +180,16 @@ function initElement(color, cdx, idx, letter) {
     opacity: 0.2
   }));
 
+  let tMesh = textMesh(letter, FONT, 0.5, 0.1);
+  addUserData( tMesh, 'TEXT_MESH', colors[cdx], idx, letter );
+  letters[cdx].push( tMesh );
+  letterGrp.add( tMesh );
+
   e.geometry.rotateX(Math.PI * 0.5);
-  addUserData( e, 'BTN_MESH', colors[cdx], idx, letter );
+  addUserData( e, 'BTN_MESH', colors[cdx], idx, letter, tMesh );
   btns.push(e);
   wheelGrp.add(e);
   elements[cdx].push(e);
-  let text = textMesh(letter, FONT, 0.5, 0.1);
-  addUserData( text, 'TEXT_MESH', colors[cdx], idx, letter );
-  letters[cdx].push( text );
-  letterGrp.add( text );
 
   if(appData.USE_LABELS){
   	var label = labels.makeTextSprite( " " + letter.toUpperCase() + " ", { fontsize: 16, backgroundColor: {r:parseFloat(rgb[0]), g:parseFloat(rgb[1]), b:parseFloat(rgb[2]), a:0}, borderColor: {r:100, g:100, b:100, a: 0} } );
@@ -204,7 +204,6 @@ function initElement(color, cdx, idx, letter) {
 
 //Arrange cipher wheels
 function arrangeElements() {
-	console.log('Arrange Elements');
 	const step = (Math.PI * 2) / elements.length;
 	for (let i = 0; i < colors.length; i++) {
 		var offset = ringData.offset * i;
@@ -223,8 +222,7 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
-			//letters[i][ndx].position.copy(pos);
-			translateLetter(letters[i][ndx], pos, 0.25, "power1.inOut", 0, 0);
+			translateLetter(e.userData.follower, pos, 0.25, "power1.inOut", 0, 0);
 
 			if(appData.USE_LABELS){
 				pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
@@ -275,7 +273,6 @@ function onMouseUp(event) {
 
    let clicked = intersectsBtn[0].object;
    addSelectedObject(clicked);
-   console.log(clicked.userData.index)
    
    if(appData.DEBUG){
    	postprocess.outlineObjects(selectedObjects);
@@ -297,19 +294,16 @@ function onMouseUp(event) {
 window.addEventListener('mouseup', onMouseUp, false);
 
 function onUpdateAppCtrls(){
-	console.log('onUpdateAppCtrls')
 	buildRings();
 	arrangeElements();
 }
 
 function onUpdateCipherCtrls(){
-	console.log('onUpdateCipherCtrls')
 	buildRings();
 	arrangeElements();
 }
 
 function onFontLoad(font){
-	console.log('onFontLoad')
 	FONT = font;
 	console.log('Font Loaded')
 	buildRings();
