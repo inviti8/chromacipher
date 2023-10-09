@@ -2,17 +2,19 @@ import * as THREE from 'three';
 import { gsap } from "gsap";
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { getSize } from '/js/utils';
 
 const loader = new FontLoader();
+let pos = new THREE.Vector3();
 
-export function animationConfig(anim='FADE', action='IN', duration=0.07, ease="power1.inOut", delay=0.007, onComplete=undefined){
+export function animationConfig(duration=0.07, ease="power1.inOut", delay=0.007, delayIdx=0, onComplete=undefined, onCompleteParams=undefined){
   return {
-    'anim': anim,
-    'action': action,
     'duration': duration,
     'ease': ease,
     'delay': delay,
-    'onComplete': onComplete
+    'delayIdx': delayIdx,
+    'onComplete': onComplete,
+    'onCompleteParams': onCompleteParams
   }
 };
 
@@ -47,10 +49,20 @@ export function textMesh(character, font, size, height, curveSegments=10, bevelE
 
 export function translateLetter(letter, targetPos, duration, ease, delay=0, delayIdx=0, onComplete=undefined, onCompleteParams=undefined){
 
+	const config = animationConfig(duration, ease, delay, delayIdx, onComplete, onCompleteParams);
+	const size = getSize( letter );
+	const offsetX = size.width/2;
+	const offsetY = size.height/2;
+	console.log(offsetX)
+	targetPos=pos.set( targetPos.x-offsetX, targetPos.y-offsetY, targetPos.z );
+	translate(letter, targetPos, config);
+
 };
 
-function translate(obj, pos, duration, ease, delay, delIdx=0){
-	props = {duration: duration, x: pos.x, y: pos.y, z: pos.z, ease: ease };
-	gsap.to(obj.position, props).delay(delay*delayIdx);
+function translate(obj, pos, config){
+
+	const props = { duration: config.duration, x: pos.x, y: pos.y, z: pos.z, ease: config.ease };
+	gsap.to(obj.position, props).delay(config.delay*config.delayIdx);
+
 }
 

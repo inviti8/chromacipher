@@ -1,5 +1,14 @@
 import * as THREE from 'three';
 
+export function getSize(elem){
+    var bbox = new THREE.Box3();
+    bbox.setFromObject( elem );
+    var width = bbox.max.x - bbox.min.x;
+    var height = bbox.max.y - bbox.min.y;
+
+    return {'width': width, 'height': height}
+};
+
 export function shuffle(array) {
   let currentIndex = array.length,  randomIndex;
 

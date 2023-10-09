@@ -6,7 +6,7 @@ import * as ui from './js/ui';
 import * as postprocess from './js/postprocess';
 import * as cipher from './js/chaocipher';
 import { shuffle } from './js/utils';
-import { loadFont, textMesh } from './js/cipher_text';
+import { loadFont, textMesh, translateLetter } from './js/cipher_text';
 
 const scene = new THREE.Scene();
 const aspectRatio = calculateAspectRatio();
@@ -223,7 +223,8 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
-			letters[i][ndx].position.copy(pos);
+			//letters[i][ndx].position.copy(pos);
+			translateLetter(letters[i][ndx], pos, 0.25, "power1.inOut", 0, 0);
 
 			if(appData.USE_LABELS){
 				pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
