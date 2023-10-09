@@ -37,6 +37,7 @@ let letterGrp = new THREE.Group();
 scene.add(letterGrp);
 
 let elements = [[],[]];
+let letterArr = [[],[]];
 let labels_list = [[],[]];
 let colors = [red, green];
 let alphabet = [...Array(26)].map((e,i)=>(i+10).toString(36));
@@ -142,17 +143,32 @@ function buildRings(){
 		});
 	});
 
+	letterGrp.children.forEach((child, idx) => {
+		child.geometry.dispose();
+		child.material.dispose();
+		child = undefined;
+	});
+
 	wheelGrp.children.forEach((child, idx) => {
 		child.geometry.dispose();
 		child.material.dispose();
+		if(child.userData.follower!=undefined){
+			child.userData.follower.geometry.dispose();
+			child.userData.follower.material.dispose();
+			scene.remove(child.userData.follower);
+		}
 	});
 
 	scene.remove(wheelGrp);
 	wheelGrp = new THREE.Group();
 	scene.add(wheelGrp);
 
+	scene.remove(letterGrp);
+	letterGrp = new THREE.Group();
+	scene.add(letterGrp);
+
 	elements = [[],[]];
-	letters = [[], []];
+	letterArr = [[], []];
 	labels_list = [[],[]];
 
 	//Create initial geometries for each color/ring
@@ -182,7 +198,7 @@ function initElement(color, cdx, idx, letter) {
 
   let tMesh = textMesh(letter, FONT, 0.5, 0.1);
   addUserData( tMesh, 'TEXT_MESH', colors[cdx], idx, letter );
-  letters[cdx].push( tMesh );
+  letterArr[cdx].push( tMesh );
   letterGrp.add( tMesh );
 
   e.geometry.rotateX(Math.PI * 0.5);
@@ -222,7 +238,7 @@ function arrangeElements() {
 					0
 				);
 			e.position.copy(pos);
-			translateLetter(e.userData.follower, pos, 0.25, "power1.inOut", 0, 0);
+			translateLetter(e.userData.follower, pos, 0.35, "back.inOut", 0, 0);
 
 			if(appData.USE_LABELS){
 				pos.set(pos.x+ringData.lbl_offset.x, pos.y+ringData.lbl_offset.y, pos.z+ringData.lbl_offset.z);
